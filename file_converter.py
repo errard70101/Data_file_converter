@@ -140,7 +140,7 @@ def execute():
         n_cols = df.shape[1]
         column_names = {}
         for i in range(0, n_cols):
-            column_names[i] = 'col'+str(i)
+            column_names[i] = 'Var'+str(i)
         df = df.rename(index=str, columns= column_names)
 
     # In fact, use to_csv function can export ascii file
