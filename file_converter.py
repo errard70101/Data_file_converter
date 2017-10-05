@@ -129,7 +129,7 @@ def execute():
 
     # Load Data
     if file_type == 'dta':
-        df = pd.read_stata(folder, header= header)
+        df = pd.read_stata(folder)
     elif file_type == 'xls' or file_type == 'xlsx':
         df = pd.read_excel(folder, header= header)
     elif file_type == 'csv':
