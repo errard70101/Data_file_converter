@@ -19,6 +19,7 @@ import astropy.table as table
 import tkinter as tk
 import tkinter.filedialog as fd
 from read_gauss import build_data_matrix
+from file_name import find_file_name
 # import string
 
 # Create user interface
@@ -187,13 +188,13 @@ def execute():
         k = len(file_type)
     if exporter == 'astropy':
         tbl = ast.table.Table.from_pandas(df)
-        ast.io.ascii.write(tbl, folder[0:len(folder)-k] + export_type, \
+        ast.io.ascii.write(tbl, find_file_name(folder) + '.' + export_type, \
                            format = 'no_header', overwrite = True)
     elif exporter == 'pandas':
-        df.to_csv(folder[0:len(folder)-k] + export_type, \
+        df.to_csv(find_file_name(folder) + '.' + export_type, \
                   sep = sep, na_rep = na_rep, header = header_e, \
                   index = index, encoding = encoding)
-    interface.report.set('Your file ' + '"' + folder[0:len(folder)-k] + \
+    interface.report.set('Your file ' + '"' + find_file_name(folder) + '.' + \
                                                     export_type + '"' + ' is ready!')
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

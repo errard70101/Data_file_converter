@@ -17,10 +17,3 @@ def find_file_name(text):
             break
 
     return(file_name)
-
-
-text = 'this_is_my_file.jpg'
-file_name = find_file_name(text)
-
-print(type(file_name))
-print(file_name)
