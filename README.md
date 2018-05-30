@@ -1,5 +1,6 @@
-# Data_file_converter 1.0
-This app can convert your Stata .dta file or Excel .xlsx/.xls file to .csv file with ascii/utf-8 encoding.
+# Data_file_converter 1.1
+This app can convert your Stata .dta file, Excel .xlsx/.xls file, and Gauss file to .csv file with ascii/utf-8 encoding.
+
 For now you need Python and according libraries to use it.
 This future version will provide Windows .exe file and Mac .app file.
 ![App phto](https://github.com/errard70101/Data_file_converter/blob/master/app_photo.png)
@@ -18,3 +19,6 @@ pip install pandas, astropy, tkinter
 3. To run this converter, type
 
 python file_converter.py
+
+## Update Note:
+version 1.1: Now can convert Gauss data to other data types.

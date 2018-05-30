@@ -8,6 +8,9 @@ This GUI script is to convert STATA .dta file, Excel .xls and .xlsx file
 to .csv or .txt file with ascii or utf-8 format.
 
 version: 1.0
+
+version: 1.1
+    Can read Gauss file.
 """
 # Load packages
 import pandas as pd
@@ -15,16 +18,17 @@ import astropy as ast
 import astropy.table as table
 import tkinter as tk
 import tkinter.filedialog as fd
+from read_gauss import build_data_matrix
 # import string
 
 # Create user interface
 
 interface = tk.Tk()
-interface.title("Format converter 1.0") # Set windows name
-interface.geometry("720x200") # Set windows size
+interface.title("Format converter 1.1") # Set windows name
+interface.geometry("820x250") # Set windows size
 
 # Create a label to display message
-des1 = tk.Label(interface, text = "Please select your file.")
+dis_mess = tk.Label(interface, text = "Please select your file.")
 
 
 # Get file path
@@ -32,13 +36,13 @@ des1 = tk.Label(interface, text = "Please select your file.")
 folder = str()
 interface.file_path = tk.StringVar() # The variable is to store file path
 
-# The function when button 'Open File' is clicked 
+# The function when button 'Open File' is clicked
 def click_file_choose():
     global folder
-    folder = fd.askopenfilename() 
+    folder = fd.askopenfilename()
     interface.file_path.set(folder)
 
-# Create button to set file path    
+# Create button to set file path
 file_choose = tk.Button(interface, command = click_file_choose, \
                         text = "Open file")
 path_name = tk.Label(interface, textvariable = interface.file_path, \
@@ -50,10 +54,12 @@ path_name = tk.Label(interface, textvariable = interface.file_path, \
 # Create a panel to contain the configs
 Import_panel = tk.LabelFrame(interface, text = 'Please choose your import preference.')
 # Create a menubotton to store import file type
-import_list1 = ('xls', 'xlsx', 'dta', 'csv')
+import_list1 = ('xls', 'xlsx', 'dta', 'csv', 'Gauss')
 interface.file_type = tk.StringVar()
 interface.file_type.set(import_list1[1])
 om1 = tk.OptionMenu(Import_panel, interface.file_type, *import_list1)
+label_input_dtype = tk.Label(Import_panel, text = 'Data Type')
+
 
 # Create a menubotton to store header preference
 mb1 = tk.Menubutton(Import_panel, text = 'Does the import file has header?', \
@@ -72,6 +78,14 @@ def off_header():
 
 mb1.menu.add_checkbutton(label = 'header', command = on_header)
 mb1.menu.add_checkbutton(label = 'no header', command = off_header)
+
+label_input_header = tk.Label(Import_panel, text = 'Header?')
+# Create entry field for the size of dataself.
+entry_label_row = tk.Label(Import_panel, text = 'Num. of Rows')
+entry_label_col = tk.Label(Import_panel, text = 'Num. of Cols')
+entry_nrows = tk.Entry(Import_panel)
+entry_ncols = tk.Entry(Import_panel)
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -84,12 +98,14 @@ export_list1 = ('txt', 'csv')
 interface.export_type = tk.StringVar()
 interface.export_type.set(export_list1[1])
 om3 = tk.OptionMenu(Export_panel, interface.export_type, *export_list1)
+label_output_dtype = tk.Label(Export_panel, text = 'Data Type')
 
 # Create a menubotton to store export data encoding
 export_list2 = ('ascii', 'utf-8')
 interface.export_encoding = tk.StringVar()
 interface.export_encoding.set(export_list2[1])
 om4 = tk.OptionMenu(Export_panel, interface.export_encoding, *export_list2)
+label_output_encoding = tk.Label(Export_panel, text = 'Encoding')
 
 # Create a menubotton to store the separation notation
 export_list3 = ('comma', 'space')
@@ -97,10 +113,27 @@ interface.export_separate = tk.StringVar()
 interface.export_separate.set(export_list3[0])
 om5 = tk.OptionMenu(Export_panel, interface.export_separate, *export_list3)
 separate = {'comma': ',', 'space': ' '}
+label_output_sep = tk.Label(Export_panel, text = 'Sep.')
 
-# Create a checkbutton to store export header preference
-interface.export_header = tk.IntVar()
-cb = tk.Checkbutton(Export_panel, text = 'header', variable = interface.export_header)
+# Create a menubotton to store header preference
+mb2 = tk.Menubutton(Export_panel, text = 'Does the import file has header?', \
+                   relief = 'raised')
+mb2.menu = tk.Menu(mb2, tearoff = 0)
+mb2['menu'] = mb2.menu
+
+def on_header_e():
+    # set header = row number
+    global header_e
+    header_e = True
+def off_header_e():
+    # set header = None
+    global header_e
+    header_e = False
+
+mb2.menu.add_checkbutton(label = 'header', command = on_header_e)
+mb2.menu.add_checkbutton(label = 'no header', command = off_header_e)
+
+label_output_header = tk.Label(Export_panel, text = 'Header')
 
 # Create a report frame to show export path and file name
 interface.report = tk.StringVar()
@@ -118,12 +151,13 @@ def execute():
     file_type = interface.file_type.get()
     exporter = 'pandas' # 'pandas' or 'astropy'
     export_type = interface.export_type.get()
+    n_rows = int(entry_nrows.get())
+    n_cols = int(entry_ncols.get())
     #=========================================================================
     # Export options for pandas
     encoding = interface.export_encoding.get()
     sep = separate[interface.export_separate.get()] # Seperation method: ' ' or ','
     na_rep = ' ' # Notation for missing data
-    header_e = interface.export_header.get() # True or False (Column names)
     index = False # True or False (Row names)
     #=========================================================================
 
@@ -131,9 +165,12 @@ def execute():
     if file_type == 'dta':
         df = pd.read_stata(folder)
     elif file_type == 'xls' or file_type == 'xlsx':
-        df = pd.read_excel(folder, header= header)
+        df = pd.read_excel(folder, header = header)
     elif file_type == 'csv':
-        df = pd.read_csv(folder, header= header)
+        df = pd.read_csv(folder, header = header)
+    elif file_type == 'Gauss':
+        mat = build_data_matrix(folder, n_rows, n_cols, sep = ' ')
+        df = pd.DataFrame(mat)
 
     # Add column names
     if header == None:
@@ -144,7 +181,10 @@ def execute():
         df = df.rename(index=str, columns= column_names)
 
     # In fact, use to_csv function can export ascii file
-    k = len(file_type)
+    if file_type == 'Gauss':
+        k = 3
+    else:
+        k = len(file_type)
     if exporter == 'astropy':
         tbl = ast.table.Table.from_pandas(df)
         ast.io.ascii.write(tbl, folder[0:len(folder)-k] + export_type, \
@@ -156,7 +196,7 @@ def execute():
     interface.report.set('Your file ' + '"' + folder[0:len(folder)-k] + \
                                                     export_type + '"' + ' is ready!')
 
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++    
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #_____________________________
 def close():                 #|
@@ -177,19 +217,29 @@ program_off = tk.Button(Control_panel, command = close, text = 'Close')
 
 # Control the item locations
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-des1.grid(row = 1, column = 1) # An Explaination
+dis_mess.grid(row = 1, column = 1) # An Explaination
 file_choose.grid(row = 1, column = 2) # The buttom to choose directory
 path_name.grid(row = 2, column = 1, columnspan = 2) # Display the directory
 
 Import_panel.grid(row = 3, column = 1)
-om1.grid(row = 1, column = 1)
-mb1.grid(row = 1, column = 2)
+label_input_dtype.grid(row = 1, column = 1)
+om1.grid(row = 2, column = 1)
+label_input_header.grid(row = 1, column = 2)
+mb1.grid(row = 2, column = 2)
+entry_label_row.grid(row = 1, column = 3)
+entry_label_col.grid(row = 1, column = 4)
+entry_nrows.grid(row = 2, column = 3)
+entry_ncols.grid(row = 2, column = 4)
 
 Export_panel.grid(row = 4, column = 1)
-om3.grid(row = 1, column = 1)
-om4.grid(row = 1, column = 2)
-om5.grid(row = 1, column = 3)
-cb.grid(row = 1, column = 4)
+label_output_dtype.grid(row = 1, column = 1)
+om3.grid(row = 2, column = 1)
+label_output_encoding.grid(row = 1, column = 2)
+om4.grid(row = 2, column = 2)
+label_output_sep.grid(row = 1, column = 3)
+om5.grid(row = 2, column = 3)
+label_output_header.grid(row = 1, column = 4)
+mb2.grid(row = 2, column = 4)
 
 mess.grid(row = 5, column = 1, columnspan = 2)
 
@@ -199,4 +249,3 @@ program_off.grid(row = 1, column = 2)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 interface.mainloop()
-
