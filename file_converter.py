@@ -117,7 +117,7 @@ separate = {'comma': ',', 'space': ' '}
 label_output_sep = tk.Label(Export_panel, text = 'Sep.')
 
 # Create a menubotton to store header preference
-mb2 = tk.Menubutton(Export_panel, text = 'Does the import file has header?', \
+mb2 = tk.Menubutton(Export_panel, text = 'Do you want to keep the header?', \
                    relief = 'raised')
 mb2.menu = tk.Menu(mb2, tearoff = 0)
 mb2['menu'] = mb2.menu
@@ -168,7 +168,9 @@ def execute():
     elif file_type == 'xls' or file_type == 'xlsx':
         df = pd.read_excel(folder, header = header)
     elif file_type == 'csv':
-        df = pd.read_csv(folder, header = header)
+        temp_load = open(folder)
+        df = pd.read_csv(temp_load, header = header)
+        temp_load.close()
     elif file_type == 'Gauss':
         mat = build_data_matrix(folder, n_rows, n_cols, sep = ' ')
         df = pd.DataFrame(mat)
