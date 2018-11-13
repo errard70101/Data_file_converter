@@ -15,7 +15,7 @@ Please install pandas, astropy, and tkinter.
 2. To install the required packages, type
 
   ```bash
-  pip install pandas, astropy, tkinter
+  pip install pandas astropy
   ```
 
 3. To run this converter, type
